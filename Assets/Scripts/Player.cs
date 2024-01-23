@@ -2,6 +2,9 @@
 using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.SceneManagement;
+
+
 
 public class Player : MonoBehaviour
 {
@@ -22,7 +25,7 @@ public class Player : MonoBehaviour
     private float _bornTime = 3.0f;
     private bool isEnemy = false;
     [SerializeField]
-    private float _lives = 3;
+    private int _lives = 3;
     private Spawner _spawner;
     [SerializeField]
     private GameObject _tripleshotPrefab;
@@ -36,7 +39,8 @@ public class Player : MonoBehaviour
     [SerializeField]
     private int _score = 0;
     UIManager uimanager;
-
+    [SerializeField]
+    private GameManager _gameEnder;
     // Start is called before the first frame update
     void Start()
     {
@@ -47,6 +51,7 @@ public class Player : MonoBehaviour
             Debug.LogError("Spawn manager is null");
         }
         uimanager = GameObject.Find("Canvas").GetComponent<UIManager>();
+        _gameEnder = GameObject.Find("Game_Manager").GetComponent<GameManager>();
 
 
     }
@@ -129,10 +134,14 @@ public class Player : MonoBehaviour
     public void Damage()
     {
         _lives--;
+        uimanager.UpdateLives(_lives);
+
         if(_lives < 1) 
         {
             _spawner.DeadController();
-            Destroy(this.gameObject); 
+            Destroy(this.gameObject);
+            uimanager.GameOver();
+            _gameEnder.gameEnder();
         }
     }
 

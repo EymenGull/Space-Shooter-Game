@@ -5,21 +5,33 @@ using UnityEngine;
 public class Enemy : MonoBehaviour
 {
     [SerializeField]
-    private int _speed_enemy = 6;
+    private float _speed_enemy = 6f;
     private Player _player;
+    private Animator anim;
+    private float _speed_corrector = 6f;
+    private float _currentSpeed;
+    [SerializeField]
+    private AudioClip _explosionClip;
+    private AudioSource _source;
     // Start is called before the first frame update
     void Start()
     {
+        _source = GetComponent<AudioSource>();
         _player = GameObject.Find("Player").GetComponent<Player>();
+        anim = gameObject.GetComponent<Animator>();
+        _speed_enemy *= 2;
+        _source.clip = _explosionClip;
     }
 
     // Update is called once per frame
     void Update()
     {
-        transform.Translate(_speed_enemy * Time.deltaTime * Vector3.down);
+        transform.Translate(_currentSpeed * Time.deltaTime * Vector3.down);
+        //_speed_enemy *= 1.002f;
         if (transform.position.y < -7)
         {
             Destroy(gameObject);
+
         }
 
     }
@@ -27,9 +39,13 @@ public class Enemy : MonoBehaviour
     {
         if (other.CompareTag("Player"))
         {
+            anim.SetTrigger("OnEnemyDeath");
+            _currentSpeed = 0;
+            _source.Play();
+            Destroy(this.gameObject, 1.5f);
 
-            Destroy(this.gameObject);
 
+                                                        
             Player player = other.GetComponent<Player>();
 
             if(player != null)
@@ -41,9 +57,19 @@ public class Enemy : MonoBehaviour
         {
             Destroy(other.gameObject);
             _player.ScorePlus();
-            Destroy(this.gameObject);
+            anim.SetTrigger("OnEnemyDeath");
+            _currentSpeed = 0;
+            _source.Play();
+            Destroy(this.gameObject,1.5f);
+
+
         }
 
          
     }
+    public void SetSpeed(float speedIncrease)
+    {
+        _currentSpeed = _speed_enemy + speedIncrease;
+    }
+
 }

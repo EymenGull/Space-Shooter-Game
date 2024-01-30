@@ -3,27 +3,20 @@ using System.Threading;
 using System.Collections.Generic;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-
-
+using UnityStandardAssets.CrossPlatformInput;
 
 public class Player : MonoBehaviour
 {
     [SerializeField]
-    private float _speed = 5.5f;
+    private float _speed = 12.5f;
     [SerializeField]
     private GameObject _laserPrefab;
     [SerializeField]
     private GameObject _enemyPrefab;
-    private float _fireRate = 5.0f;
-    private float am_time = 0.0f;
-    private int i = 0;
     private int shotCount = 0;
-    private int enemyNum = 0;
     private float reloadTime = 3f; // Şarjör değiştirme süresi
     private bool isReloading = false; // Şarjör değiştirme durumunu kontrol etmek için
     //private readonly float _x = Random.Range(-9.0f, 9.0f);
-    private float _bornTime = 3.0f;
-    private bool isEnemy = false;
     [SerializeField]
     private int _lives = 3;
     private Spawner _spawner;
@@ -33,7 +26,6 @@ public class Player : MonoBehaviour
     private GameObject _powerupPrefab;
     [SerializeField]
     private GameObject _shieldPrefab;
-    private powerup _powerup;
     private bool _isTripleActive = false;
     private bool _isSpeedupActive = false;
     [SerializeField]
@@ -41,9 +33,15 @@ public class Player : MonoBehaviour
     UIManager uimanager;
     [SerializeField]
     private GameManager _gameEnder;
+    [SerializeField]
+    private AudioClip _laserClip;
+    private AudioSource _source;
+
     // Start is called before the first frame update
     void Start()
     {
+        _source = GetComponent<AudioSource>();
+        _source.clip = _laserClip;
         transform.position = new Vector3(0,0,0);
         _spawner = GameObject.Find("SpawnManager").GetComponent<Spawner>();
         if(_spawner == null)
@@ -54,14 +52,15 @@ public class Player : MonoBehaviour
         _gameEnder = GameObject.Find("Game_Manager").GetComponent<GameManager>();
 
 
+
     }
 
     // Update is called once per frame
     void Update()
     {
         CalculateMovement();
-
-        if (Input.GetKeyDown(KeyCode.Space) && !isReloading)
+        //Input.GetKeyDown(KeyCode.Space)
+        if (CrossPlatformInputManager.GetButton("Jump") && !isReloading)
         {
             LaserMovement();
         }
@@ -80,8 +79,8 @@ public class Player : MonoBehaviour
 
     void CalculateMovement()
     {
-        float horizontalInput = Input.GetAxis("Horizontal");
-        float verticalInput = Input.GetAxis("Vertical");
+        float horizontalInput = CrossPlatformInputManager.GetAxis("Horizontal");
+        float verticalInput = CrossPlatformInputManager.GetAxis("Vertical");
 
 
         transform.Translate(_speed * Time.deltaTime * new Vector3(horizontalInput, verticalInput, 0));
@@ -112,15 +111,23 @@ public class Player : MonoBehaviour
         {
 
             Instantiate(_laserPrefab, transform.position + new Vector3(0, 0.8f, 0), Quaternion.identity);
+            StartCoroutine(FireRater());
             shotCount++;
         }
-        else { Instantiate(_tripleshotPrefab, transform.position + new Vector3(0, 0.2f, 0), Quaternion.identity); }
+        else { Instantiate(_tripleshotPrefab, transform.position + new Vector3(0, 0.2f, 0), Quaternion.identity);
+               StartCoroutine(FireRater());
+        }
 
         if (shotCount >= 10)
         {
             StartCoroutine(Reload());
         }
+        _source.Play();
         
+    }
+    IEnumerator FireRater()
+    {
+        yield return new WaitForSeconds(0.5f);
     }
 
     /*IEnumerator EnemyBorn()
@@ -165,10 +172,10 @@ public class Player : MonoBehaviour
     }
     IEnumerator SpeedupActivation()
     {
-        _speed = 20f;
+        _speed = 17f;
         yield return new WaitForSeconds(5);
         _isSpeedupActive = false;
-        _speed = 5.5f;
+        _speed = 12.5f;
     }
 
     public void SpeedupActivator()
@@ -178,7 +185,7 @@ public class Player : MonoBehaviour
     }
     public void ScorePlus()
     {
-        _score = _score + 10;
+        _score += 10;
         uimanager.UpdateScore(_score);
     }
 
